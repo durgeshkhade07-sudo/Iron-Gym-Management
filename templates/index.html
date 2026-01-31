@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Iron Gym | Elite Console</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00f2fe; --danger: #ff0055; --bg: #0a0f1e; }
+        body { background: var(--bg); color: #fff; font-family: 'Poppins', sans-serif; margin: 0; min-height: 100vh; }
+        .sidebar { background: rgba(0,0,0,0.9); width: 260px; height: 100vh; position: fixed; padding: 40px 20px; border-right: 1px solid rgba(255,255,255,0.1); }
+        .content { margin-left: 260px; padding: 50px; min-height: 100vh; display: flex; flex-direction: column; }
+        .brand { font-family: 'Orbitron'; color: var(--neon); font-size: 1.8rem; text-align: center; margin-bottom: 50px; text-shadow: 0 0 10px var(--neon); }
+        .nav-item { color: #bbb; text-decoration: none; padding: 15px; display: block; border-radius: 12px; margin-bottom: 10px; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: rgba(0,242,254,0.1); color: var(--neon); }
+        .glass-panel { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border-radius: 25px; padding: 35px; border: 1px solid rgba(255,255,255,0.1); flex-grow: 1; }
+        .user-avatar { width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--neon); object-fit: cover; cursor: pointer; transition: 0.3s; }
+        .user-avatar:hover { transform: scale(1.1); }
+        .table-custom { width: 100%; border-collapse: separate; border-spacing: 0 15px; }
+        .table-custom td { background: rgba(255,255,255,0.03); padding: 20px; vertical-align: middle; }
+        .table-custom td:first-child { border-radius: 15px 0 0 15px; }
+        .table-custom td:last-child { border-radius: 0 15px 15px 0; }
+        .btn-pdf { background: var(--neon); color: #000; border: none; padding: 7px 15px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; text-decoration: none; }
+        .btn-remove { color: var(--danger); border: 1.5px solid var(--danger); padding: 7px 12px; border-radius: 8px; font-size: 0.8rem; transition: 0.3s; text-decoration: none; }
+        .btn-remove:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px var(--danger); }
+        .status-badge { color: #39ff14; font-weight: bold; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar animate__animated animate__fadeInLeft">
+    <div class="brand">IRON GYM</div>
+    <a href="/" class="nav-item active">📊 Dashboard</a>
+    <a href="/register" class="nav-item">👤 Add Athlete</a>
+</div>
+
+<div class="content">
+    <div class="d-flex justify-content-between align-items-center mb-5 animate__animated animate__fadeInDown">
+        <h2 class="fw-bold">Athlete <span style="color:var(--neon)">Console</span></h2>
+        <div class="text-white-50 small">Total: {{ members|length }} Registered</div>
+    </div>
+
+    <div class="glass-panel animate__animated animate__fadeInUp">
+        <table class="table-custom text-white">
+            <thead>
+                <tr style="color: var(--neon); font-family: 'Orbitron'; font-size: 0.7rem;">
+                    <th>ATHLETE PROFILE</th>
+                    <th>STATUS</th>
+                    <th>FITNESS DATA & ADVICE</th>
+                    <th>MEMBERSHIP</th>
+                    <th class="text-end">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in members %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="{{ url_for('static', filename='uploads/' + m.photo) }}" class="user-avatar" onclick="zoom(this.src)">
+                            <div class="ms-3">
+                                <div class="fw-bold">{{ m.name }}</div>
+                                <small class="text-secondary">{{ m.phone }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="status-badge">{{ m.status }}</span></td>
+                    <td>
+                        <div class="text-info fw-bold">BMI: {{ m.bmi_val }}</div>
+                        <div class="small text-white-50" style="max-width: 250px;">
+                            <strong>Diet:</strong> {{ m.diet }} <br>
+                            <strong>Tip:</strong> {{ m.advice }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="{{ 'text-danger fw-bold animate__animated animate__flash animate__infinite' if m.is_expired else 'text-white-50' }}">
+                            {{ m.exp_date }}
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <a href="/download_report/{{ m.id }}" class="btn-pdf me-2">REPORT</a>
+                        <a href="/attendance/{{ m.id }}" class="btn btn-sm btn-outline-info">Check</a>
+                        <a href="/delete/{{ m.id }}" class="btn-remove ms-3" onclick="return confirm('Remove athlete?')">DELETE</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="overlay" onclick="this.style.display='none'"><img id="zoomImg" style="max-width:80%; border:2px solid var(--neon); border-radius:20px;"></div>
+<script>
+    function zoom(s) { document.getElementById('zoomImg').src = s; document.getElementById('overlay').style.display = 'flex'; }
+</script>
+</body>
+</html>
